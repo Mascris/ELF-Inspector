@@ -1,4 +1,5 @@
 #include <elf.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -21,13 +22,30 @@ const int isClass(unsigned char *ehdr){
 
 const char *isMachine(uint16_t machine){
   switch (machine) {
-    case EM_X86_64: return "Advanced Micro Devices X86-64";
-    case EM_386: return "Intel 80386";
-    case EM_AARCH64: return "ARM AArch64";
-    default: return "Unkown Machine";
+    case EM_X86_64:   return "Advanced Micro Devices X86-64";
+    case EM_386:      return "Intel 80386";
+    case EM_AARCH64:  return "ARM AArch64";
+    default:          return "Unkown Machine";
   }
 }
 
+const char *istype(uint16_t type){
+  switch (type) {
+    case ET_REL:  return "A relocatable file";
+    case ET_EXEC: return "An executable file";
+    case ET_DYN:  return "A shared file";
+    case ET_CORE: return "A core file";
+  default:        return "An Unkown type";
+  }
+}
+
+const char *isdata(unsigned char *ehdr){
+    switch (ehdr[EI_DATA]) {
+      case ELFDATA2LSB: return "Little-endian";
+      case ELFDATA2MSB: return "Big-endian";
+    default:            return "Unkown data format";
+    }
+}
 
 int main(int argc, char *argv[]){
   int result;
@@ -48,9 +66,7 @@ int main(int argc, char *argv[]){
 
   if (isElf(ehdr.e_ident) == false) {fprintf(stderr, "Not Elf file"); fclose(file); return 1;};
 
-
   printf("ELF Header:\n");
-  printf("entry point: %lx\n",ehdr.e_entry);
 
   printf("Magic Number: ");
   for (long unsigned int i = 0; i < sizeof(ehdr.e_ident); i++) {
@@ -64,7 +80,13 @@ int main(int argc, char *argv[]){
   else{
     printf("Class: %d-bit architecture\n",result);}
 
-    printf("Machine: %s",isMachine(ehdr.e_machine));
+  printf("Data: %s\n",isdata(ehdr.e_ident));
+
+  printf("Type: %s\n",istype(ehdr.e_type));
+
+  printf("Machine: %s\n",isMachine(ehdr.e_machine));
+
+  printf("entry point: %lx\n",ehdr.e_entry);
 
   fclose(file);
   return 0;
