@@ -49,7 +49,7 @@ int main(int argc, char *argv[]){
   if (isElf(ehdr.e_ident) == false) {fprintf(stderr, "Not Elf file"); fclose(file); return 1;};
 
 
-  printf("ELF Header\n\n");
+  printf("ELF Header:\n");
   printf("entry point: %lx\n",ehdr.e_entry);
 
   printf("Magic Number: ");
