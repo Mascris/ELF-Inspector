@@ -81,12 +81,21 @@ int main(int argc, char *argv[]){
     printf("Class: %d-bit architecture\n",result);}
 
   printf("Data: %s\n",isdata(ehdr.e_ident));
-
   printf("Type: %s\n",istype(ehdr.e_type));
-
   printf("Machine: %s\n",isMachine(ehdr.e_machine));
 
   printf("entry point: %lx\n",ehdr.e_entry);
+  printf("Program headers: %ld\n",ehdr.e_phoff);
+  printf("Section headers: %ld\n",ehdr.e_shoff);
+
+  printf("Flag: 0x%x\n",ehdr.e_flags);
+  
+  printf("Elf size of this headers: %d (bytes)\n",ehdr.e_ehsize);
+  printf("Elf headers size in one entry: %d (bytes)\n",ehdr.e_phentsize);
+
+  printf("Number of section headers: %d\n",ehdr.e_shnum);
+  printf("size of section headers: %d (bytes)\n",ehdr.e_shentsize);
+  printf("index of string table: %d\n",ehdr.e_shstrndx);
 
   fclose(file);
   return 0;
