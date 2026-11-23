@@ -1,17 +1,18 @@
 #include <elf.h>
+//#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 
-bool isElf(unsigned char *ehdr){
+bool is_elf(unsigned char *ehdr){
   if (ehdr[EI_MAG0] == ELFMAG0 && ehdr[EI_MAG1] == ELFMAG1 && ehdr[EI_MAG2] == ELFMAG2 && ehdr[EI_MAG3] == ELFMAG3)
     return true;
 
   return false;
 }
 
- int GetClass(unsigned char *ehdr){
+int get_class(unsigned char *ehdr){
   switch (ehdr[EI_CLASS]) {
     case ELFCLASS64: return 64;
     case ELFCLASS32: return 32;
@@ -19,8 +20,7 @@ bool isElf(unsigned char *ehdr){
   }
 }
 
-
-const char *MachineName(uint16_t machine){
+const char *machine_name(uint16_t machine){
   switch (machine) {
     case EM_X86_64:   return "Advanced Micro Devices X86-64";
     case EM_386:      return "Intel 80386";
@@ -29,7 +29,7 @@ const char *MachineName(uint16_t machine){
   }
 }
 
-const char *TypeName(uint16_t type){
+const char *type_name(uint16_t type){
   switch (type) {
     case ET_REL:  return "A relocatable file";
     case ET_EXEC: return "An executable file";
@@ -39,7 +39,7 @@ const char *TypeName(uint16_t type){
   }
 }
 
-const char *isdata(unsigned char *ehdr){
+const char *is_data(unsigned char *ehdr){
     switch (ehdr[EI_DATA]) {
       case ELFDATA2LSB: return "Little-endian";
       case ELFDATA2MSB: return "Big-endian";
@@ -62,32 +62,40 @@ int main(int argc, char *argv[]){
   }
 
   Elf64_Ehdr ehdr;
+  Elf64_Shdr shdr;
+
   if(fread(&ehdr, 1, sizeof(ehdr), file) != sizeof(ehdr)){
     fprintf(stderr, "File too small\n");
     fclose(file);
     return 1;
   }
 
-  if (isElf(ehdr.e_ident) == false) {fprintf(stderr, "Not Elf file\n"); fclose(file); return 1;};
+  if (fread(&shdr, 1, sizeof(shdr), file) != sizeof(shdr)) {
+    fprintf(stderr, "File too small\n");
+    fclose(file);
+    return 1;
+  }
+
+  if (is_elf(ehdr.e_ident) == false) {fprintf(stderr, "Not Elf file\n"); fclose(file); return 1;}
 
   printf("ELF Header:\n");
 
   printf("Magic Number: ");
-  for (long unsigned int i = 0; i < sizeof(ehdr.e_ident); i++) {
+  for (size_t i = 0; i < sizeof(ehdr.e_ident); i++) {
     printf("%02x ",ehdr.e_ident[i]);
   }
   printf("\n");
   
-    result = GetClass(ehdr.e_ident);
+    result = get_class(ehdr.e_ident);
   if (result == 0) {
     fprintf(stderr, "This Class is invalid\n"); fclose(file); return 1;}
-  else if (result == 32) {  fprintf(stderr, "only 64-bit supported right now"); fclose(file); return 0;}
+  else if (result == 32) {  fprintf(stderr, "only 64-bit supported right now\n"); fclose(file); return 1;}
   else{
     printf("Class: %d-bit architecture\n",result);}
 
-  printf("Data: %s\n",isdata(ehdr.e_ident));
-  printf("Type: %s\n",TypeName(ehdr.e_type));
-  printf("Machine: %s\n",MachineName(ehdr.e_machine));
+  printf("Data: %s\n",is_data(ehdr.e_ident));
+  printf("Type: %s\n",type_name(ehdr.e_type));
+  printf("Machine: %s\n",machine_name(ehdr.e_machine));
 
   printf("entry point: %lx\n",ehdr.e_entry);
   printf("Program headers: %lx\n",ehdr.e_phoff);
