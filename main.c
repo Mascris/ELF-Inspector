@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <inttypes.h>
 
 bool is_elf(unsigned char *ehdr){
   if (ehdr[EI_MAG0] == ELFMAG0 && ehdr[EI_MAG1] == ELFMAG1 && ehdr[EI_MAG2] == ELFMAG2 && ehdr[EI_MAG3] == ELFMAG3)
@@ -62,13 +63,23 @@ int main(int argc, char *argv[]){
   }
 
   Elf64_Ehdr ehdr;
-  Elf64_Shdr shdr;
-
 
   if(fread(&ehdr, 1, sizeof(ehdr), file) != sizeof(ehdr)){
     fprintf(stderr, "File too small\n");
     fclose(file);
     return 1;
+  }
+
+  if (ehdr.e_shoff == 0 || ehdr.e_shnum == 0) {
+      fprintf(stderr, "No section headers");
+      fclose(file);
+      return 1;
+  }
+
+  if (ehdr.e_shentsize != sizeof(Elf64_Shdr)) {
+      fprintf(stderr, "Wrong sizes in sections header");
+      fclose(file);
+      return 1;
   }
 
   if (is_elf(ehdr.e_ident) == false) {fprintf(stderr, "Not Elf file\n"); fclose(file); return 1;}
@@ -92,9 +103,9 @@ int main(int argc, char *argv[]){
   printf("Type: %s\n",type_name(ehdr.e_type));
   printf("Machine: %s\n",machine_name(ehdr.e_machine));
 
-  printf("entry point: 0x%lx\n",ehdr.e_entry);
-  printf("Program headers: %lx\n",ehdr.e_phoff);
-  printf("Section headers: 0x%lx\n",ehdr.e_shoff);
+  printf("entry point: 0x%" PRIx64 "\n",ehdr.e_entry);
+  printf("Program headers: 0x%" PRIx64 "\n",ehdr.e_phoff);
+  printf("Section headers: 0x%" PRIx64 "\n",ehdr.e_shoff);
 
   printf("Flag: 0x%x\n",ehdr.e_flags);
   
@@ -107,8 +118,7 @@ int main(int argc, char *argv[]){
   printf("index of string table: %d\n",ehdr.e_shstrndx);
 
   //Section Headrs
-  //TODO: add check condition for e_shentsize == sizeof(Elf64_Shdr) and handling e_shnum == 0
-  printf("Section Headers: \n");
+  printf("\n Section Headers: \n");
 
   Elf64_Shdr shdrs[ehdr.e_shnum];
   fseek(file, ehdr.e_shoff, SEEK_SET);
@@ -117,11 +127,21 @@ int main(int argc, char *argv[]){
   Elf64_Shdr strtab_hdr = shdrs[ehdr.e_shstrndx];
   char *shstrtab = malloc(strtab_hdr.sh_size);
 
+  if (ehdr.e_shstrndx >= ehdr.e_shnum) {
+    fprintf(stderr, "Wrong e_shstrndx\n");
+    free(shstrtab);
+    fclose(file);
+    return 1;
+  }
+
   fseek(file, strtab_hdr.sh_offset, SEEK_SET);
   fread(shstrtab, 1, strtab_hdr.sh_size, file);
 
   for (int i = 0; i < ehdr.e_shnum; i++) {
-    printf("[%2d] Name: %-22s Offseet: 0x%08lx Size: %ld bytes\n", i, &shstrtab[shdrs[i].sh_name], (unsigned long)shdrs[i].sh_offset, (unsigned long)shdrs[i].sh_size);
+    //&shstrtab[shdrs[i].sh_name] same as name
+    char *name = shstrtab + shdrs[i].sh_name;
+    printf("[%2d] Name: %-21s Offset: 0x%010" PRIx64 " Size: %-3" PRIx64 " bytes\n",
+            i, name, (unsigned long)shdrs[i].sh_offset, (unsigned long)shdrs[i].sh_size);
   }
 
   free(shstrtab);
