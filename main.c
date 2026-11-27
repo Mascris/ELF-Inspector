@@ -130,15 +130,14 @@ int main(int argc, char *argv[]){
   fseek(file, ehdr.e_shoff, SEEK_SET);
   fread(shdrs, sizeof(Elf64_Shdr), ehdr.e_shnum, file);
 
-  Elf64_Shdr strtab_hdr = shdrs[ehdr.e_shstrndx];
-  char *shstrtab = malloc(strtab_hdr.sh_size);
-
   if (ehdr.e_shstrndx >= ehdr.e_shnum) {
     fprintf(stderr, "Wrong e_shstrndx\n");
-    free(shstrtab);
     fclose(file);
     return 1;
   }
+
+  Elf64_Shdr strtab_hdr = shdrs[ehdr.e_shstrndx];
+  char *shstrtab = malloc(strtab_hdr.sh_size);
 
   fseek(file, strtab_hdr.sh_offset, SEEK_SET);
   fread(shstrtab, 1, strtab_hdr.sh_size, file);
@@ -151,6 +150,11 @@ int main(int argc, char *argv[]){
     print_flag(shdrs[i].sh_flags);
     printf("\n");
   }
+
+  //Hexdump Like for .rodata for now
+  printf("\nHexdump-Like:\n");
+
+
 
   free(shstrtab);
   fclose(file);
