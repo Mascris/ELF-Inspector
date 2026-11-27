@@ -1,6 +1,6 @@
 # ELF-Inspector
 
-A small command-line tool written in C that reads the header of an ELF file and prints basic information about it.
+A small elf viewer in C that reads the elf headers of an Elf file and prints informations about it.
 
 ## Features
 
@@ -9,6 +9,7 @@ A small command-line tool written in C that reads the header of an ELF file and 
 - Prints the magic number bytes
 - Detects the class (32-bit or 64-bit)
 - Identifies the target machine (x86-64, Intel 80386, ARM AArch64)
+- Section Headers printing 
 - Still adding and LEARNING
 
 ## Build
@@ -16,8 +17,6 @@ A small command-line tool written in C that reads the header of an ELF file and 
 ```bash
 gcc -o main main.c
 ```
-
-Replace `main.c` with the name of your source file.
 
 ## Usage
 

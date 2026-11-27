@@ -48,6 +48,12 @@ const char *is_data(unsigned char *ehdr){
     }
 }
 
+void print_flag(uint64_t flag){
+  putchar(flag & SHF_WRITE ? 'W' : '-');
+  putchar(flag & SHF_ALLOC ? 'A' : '-');
+  putchar(flag & SHF_EXECINSTR ? 'X' : '-');
+}
+
 int main(int argc, char *argv[]){
   int result;
 
@@ -140,8 +146,10 @@ int main(int argc, char *argv[]){
   for (int i = 0; i < ehdr.e_shnum; i++) {
     //&shstrtab[shdrs[i].sh_name] same as name
     char *name = shstrtab + shdrs[i].sh_name;
-    printf("[%2d] Name: %-21s Offset: 0x%010" PRIx64 " Size: %-3" PRIx64 " bytes\n",
-            i, name, (unsigned long)shdrs[i].sh_offset, (unsigned long)shdrs[i].sh_size);
+    printf("[%2d] Name: %-21s Offset: 0x%010" PRIx64 " Size: %-3" PRIu64 " bytes Flag: ",
+            i, name, shdrs[i].sh_offset, shdrs[i].sh_size);
+    print_flag(shdrs[i].sh_flags);
+    printf("\n");
   }
 
   free(shstrtab);
